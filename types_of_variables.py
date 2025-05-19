@@ -1,5 +1,5 @@
-import randomimport streamlit as st
-
+import random
+import streamlit as st
 # ----- Embedded Data Dictionaries -----
 
 nominal = {
