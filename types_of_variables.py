@@ -1,5 +1,6 @@
-import random
 import streamlit as st
+import random
+
 # ----- Embedded Data Dictionaries -----
 
 nominal = {
@@ -469,46 +470,47 @@ def choose_and_sample(dictionary):
         sampled_points = random.choices(data_points, k=5)
     return category, sampled_points
 
-def format_values(values):
-    return ', '.join(str(x) for x in values)
+def double_space_periods(s):
+    s = s.replace('. ', '.  ')
+    if s.endswith('.'):
+        s += ' '
+    return s
 
-def main():
-    st.write("Identify what type of variable each data set is below.")  
-    st.write()  
-
-    # Always one of each type first
+def generate_problem_set():
     used = []
     for name, dictionary in type_dicts:
         category, values = choose_and_sample(dictionary)
         used.append((name, category, values))
 
-    # For the three random extras, allow any type (including repeats)
-    all_dicts = [
-        ("nominal", nominal),
-        ("ordinal", ordinal),
-        ("discrete", discrete),
-        ("continuous", continuous),
-    ]
+    all_dicts = type_dicts
     extra = []
     for _ in range(3):
         name, dictionary = random.choice(all_dicts)
         category, values = choose_and_sample(dictionary)
         extra.append((name, category, values))
 
-    # Combine and shuffle for randomness
     total = used + extra
     random.shuffle(total)
+    return total
 
-    # Output data sets
-    for name, category, values in total:
-        st.write(f"{category}")  
-        st.write(f"{format_values(values)}")  
-        st.write()  
+st.title("Type of Variable Problem Set")
 
-    # Output answer key
-    st.write("Answer Key:")  
-    for idx, (name, category, _) in enumerate(total, 1):
-        st.write(f"{category}: {name}")  
+st.write(double_space_periods("Identify what type of variable each data set is below."))
 
-if __name__ == "__main__":
-    main()
+if st.button("Generate New Problem Set"):
+    st.session_state['problem_set'] = generate_problem_set()
+
+if 'problem_set' not in st.session_state:
+    st.session_state['problem_set'] = generate_problem_set()
+
+problem_set = st.session_state['problem_set']
+
+for idx, (name, category, values) in enumerate(problem_set, 1):
+    label = f"{idx}. {category}."
+    data = ', '.join(str(x) for x in values)
+    st.write(double_space_periods(f"{label} {data}"))
+
+st.markdown('<hr>', unsafe_allow_html=True)
+st.write(double_space_periods("Answer Key:"))
+for idx, (name, _, _) in enumerate(problem_set, 1):
+    st.write(double_space_periods(f"{idx}. {name}"))
