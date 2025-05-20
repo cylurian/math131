@@ -2,9 +2,6 @@ import random
 import textwrap
 import streamlit as st
 
-# Set Streamlit page to wide layout
-st.set_page_config(layout="wide")
-
 # ----- Embedded Data Dictionaries -----
 
 nominal = {
@@ -375,13 +372,13 @@ ordinal = {
 continuous = {
     "Height of students (cm)": [round(random.uniform(140, 200), 2) for _ in range(10)],
     "Weight of adults (kg)": [round(random.uniform(50, 120), 2) for _ in range(10)],
-    "Temperature in a city (°C)": [round(random.uniform(-10, 40), 2) for _ in range(10)],
+    "Temperature in a city (�C)": [round(random.uniform(-10, 40), 2) for _ in range(10)],
     "Length of fish (cm)": [round(random.uniform(2, 100), 2) for _ in range(10)],
     "Time to run 100m (seconds)": [round(random.uniform(9.5, 20), 2) for _ in range(10)],
     "Amount of rainfall (mm)": [round(random.uniform(0, 200), 2) for _ in range(10)],
     "Speed of a car (km/h)": [round(random.uniform(0, 200), 2) for _ in range(10)],
     "Blood pressure (mmHg)": [round(random.uniform(80, 180), 2) for _ in range(10)],
-    "Body temperature (°C)": [round(random.uniform(35, 42), 2) for _ in range(10)],
+    "Body temperature (�C)": [round(random.uniform(35, 42), 2) for _ in range(10)],
     "Length of pencils (cm)": [round(random.uniform(5, 20), 2) for _ in range(10)],
     "Volume of water in a glass (ml)": [round(random.uniform(100, 500), 2) for _ in range(10)],
     "Distance to school (km)": [round(random.uniform(0.1, 20), 2) for _ in range(10)],
@@ -410,7 +407,7 @@ continuous = {
     "Depth of a swimming pool (m)": [round(random.uniform(1, 5), 2) for _ in range(10)],
     "Price of gasoline ($/L)": [round(random.uniform(0.8, 2.5), 2) for _ in range(10)],
     "Length of a song (minutes)": [round(random.uniform(1.5, 7), 2) for _ in range(10)],
-    "Temperature of coffee (°C)": [round(random.uniform(40, 95), 2) for _ in range(10)],
+    "Temperature of coffee (�C)": [round(random.uniform(40, 95), 2) for _ in range(10)],
     "Weight of a cat (kg)": [round(random.uniform(2, 10), 2) for _ in range(10)],
     "Time to solve a puzzle (minutes)": [round(random.uniform(1, 120), 2) for _ in range(10)],
 }
@@ -475,6 +472,7 @@ def choose_and_sample(dictionary):
     return category, sampled_points
 
 def double_space_periods(s):
+    # Handles double spacing after periods (including line end)
     out = s.replace('. ', '.  ')
     if out.endswith('.'):
         out += ' '
@@ -502,7 +500,14 @@ def build_wrapped_row(idx, category, value_str, num_width, col1, col2):
         )
     return "\n".join(rows)
 
-def get_problem_set():
+def main():
+    st.title(double_space_periods("Identify the Type of Variable"))
+    st.write(double_space_periods("For each data set below, identify the type of variable."))
+    st.write(double_space_periods(
+        "The possible types are: Nominal, Ordinal, Discrete, Continuous."
+    ))
+
+    # Generate 7 data sets (4 types + 3 extras) and shuffle
     used = []
     for name, dictionary in type_dicts:
         category, sample = choose_and_sample(dictionary)
@@ -516,67 +521,37 @@ def get_problem_set():
     total = used + extra
     total = total[:7]
     random.shuffle(total)
-    return total
 
-# Use Streamlit session state so that reruns preserve or reset values
-if 'problem_set' not in st.session_state:
-    st.session_state['problem_set'] = get_problem_set()
+    num_width = 6
+    col1 = 32
+    col2 = 60
 
-st.title(double_space_periods("Identify the Type of Variable"))
-st.write(double_space_periods("For each data set below, identify the type of variable."))
-st.write(double_space_periods(
-    "The possible types are: Nominal, Ordinal, Discrete, Continuous."
-))
-
-# Button to rerun random data
-if st.button('Run Again'):
-    st.session_state['problem_set'] = get_problem_set()
-
-problem_set = st.session_state['problem_set']
-
-# Dynamically calculate the maximum length of the "Values" column
-max_val_len = 0
-for _, values, _ in problem_set:
-    value_str = "{" + ', '.join(str(x) for x in values) + "}"
-    if len(value_str) > max_val_len:
-        max_val_len = len(value_str)
-# Buffer and cap to prevent super-wide boxes
-col2 = min(max(max_val_len + 10, 60), 120)
-col1 = 32
-num_width = 6
-
-table_lines = []
-header = (
-    pad("#", num_width) +
-    pad("Data Set", col1) +
-    pad("Values", col2)
-)
-line_sep = "-" * (num_width + col1 + col2)
-table_lines.append(header)
-table_lines.append(line_sep)
-
-for idx, (category, values, _type) in enumerate(problem_set, 1):
-    value_str = "{" + ', '.join(str(x) for x in values) + "}"
-    row = build_wrapped_row(idx, category, value_str, num_width, col1, col2)
-    table_lines.append(row)
+    table_lines = []
+    header = (
+        pad("#", num_width) +
+        pad("Data Set", col1) +
+        pad("Values", col2)
+    )
+    line_sep = "-" * (num_width + col1 + col2)
+    table_lines.append(header)
     table_lines.append(line_sep)
 
-# Use st.text_area for automatic text wrapping and bigger display
-st.text_area(
-    label="",
-    value="\n".join(table_lines),
-    height=400,
-)
+    for idx, (category, values, _type) in enumerate(total, 1):
+        value_str = "{" + ', '.join(str(x) for x in values) + "}"
+        row = build_wrapped_row(idx, category, value_str, num_width, col1, col2)
+        table_lines.append(row)
+        table_lines.append(line_sep)
 
-# Answer Key
-st.subheader(double_space_periods("Answer Key"))
-answer_lines = []
-for idx, (_, _, _type) in enumerate(problem_set, 1):
-    answer = _type.capitalize()
-    answer_lines.append(f"{idx}. {answer}")
-    answer_lines.append("")
-st.text_area(
-    label="",
-    value="\n".join(answer_lines),
-    height=170,
-)
+    st.code("\n".join(table_lines), language="text")
+
+    # Answer Key
+    st.subheader(double_space_periods("Answer Key"))
+    answer_lines = []
+    for idx, (_, _, _type) in enumerate(total, 1):
+        answer = _type.capitalize()
+        answer_lines.append(f"{idx}. {answer}")
+        answer_lines.append("")
+    st.code("\n".join(answer_lines), language="text")
+
+if __name__ == "__main__":
+    main()
