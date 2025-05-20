@@ -1,5 +1,6 @@
-import streamlit as st
 import random
+import textwrap
+import streamlit as st
 
 # ----- Embedded Data Dictionaries -----
 
@@ -371,13 +372,13 @@ ordinal = {
 continuous = {
     "Height of students (cm)": [round(random.uniform(140, 200), 2) for _ in range(10)],
     "Weight of adults (kg)": [round(random.uniform(50, 120), 2) for _ in range(10)],
-    "Temperature in a city (°C)": [round(random.uniform(-10, 40), 2) for _ in range(10)],
+    "Temperature in a city (ÔøΩC)": [round(random.uniform(-10, 40), 2) for _ in range(10)],
     "Length of fish (cm)": [round(random.uniform(2, 100), 2) for _ in range(10)],
     "Time to run 100m (seconds)": [round(random.uniform(9.5, 20), 2) for _ in range(10)],
     "Amount of rainfall (mm)": [round(random.uniform(0, 200), 2) for _ in range(10)],
     "Speed of a car (km/h)": [round(random.uniform(0, 200), 2) for _ in range(10)],
     "Blood pressure (mmHg)": [round(random.uniform(80, 180), 2) for _ in range(10)],
-    "Body temperature (°C)": [round(random.uniform(35, 42), 2) for _ in range(10)],
+    "Body temperature (ÔøΩC)": [round(random.uniform(35, 42), 2) for _ in range(10)],
     "Length of pencils (cm)": [round(random.uniform(5, 20), 2) for _ in range(10)],
     "Volume of water in a glass (ml)": [round(random.uniform(100, 500), 2) for _ in range(10)],
     "Distance to school (km)": [round(random.uniform(0.1, 20), 2) for _ in range(10)],
@@ -406,7 +407,7 @@ continuous = {
     "Depth of a swimming pool (m)": [round(random.uniform(1, 5), 2) for _ in range(10)],
     "Price of gasoline ($/L)": [round(random.uniform(0.8, 2.5), 2) for _ in range(10)],
     "Length of a song (minutes)": [round(random.uniform(1.5, 7), 2) for _ in range(10)],
-    "Temperature of coffee (°C)": [round(random.uniform(40, 95), 2) for _ in range(10)],
+    "Temperature of coffee (ÔøΩC)": [round(random.uniform(40, 95), 2) for _ in range(10)],
     "Weight of a cat (kg)": [round(random.uniform(2, 10), 2) for _ in range(10)],
     "Time to solve a puzzle (minutes)": [round(random.uniform(1, 120), 2) for _ in range(10)],
 }
@@ -458,7 +459,7 @@ type_dicts = [
     ("nominal", nominal),
     ("ordinal", ordinal),
     ("discrete", discrete),
-    ("continuous", continuous),
+    ("continuous", continuous)
 ]
 
 def choose_and_sample(dictionary):
@@ -471,46 +472,86 @@ def choose_and_sample(dictionary):
     return category, sampled_points
 
 def double_space_periods(s):
-    s = s.replace('. ', '.  ')
-    if s.endswith('.'):
-        s += ' '
-    return s
+    # Handles double spacing after periods (including line end)
+    out = s.replace('. ', '.  ')
+    if out.endswith('.'):
+        out += ' '
+    return out
 
-def generate_problem_set():
+def pad(text, width):
+    return str(text).ljust(width)
+
+def build_wrapped_row(idx, category, value_str, num_width, col1, col2):
+    cat_lines = textwrap.wrap(category, width=col1)
+    val_lines = textwrap.wrap(value_str, width=col2)
+    n_lines = max(len(cat_lines), len(val_lines))
+    cat_lines += [''] * (n_lines - len(cat_lines))
+    val_lines += [''] * (n_lines - len(val_lines))
+    rows = []
+    for i in range(n_lines):
+        if i == 0:
+            num = f"{idx}."
+        else:
+            num = ""
+        rows.append(
+            pad(num, num_width) +
+            pad(cat_lines[i], col1) +
+            pad(val_lines[i], col2)
+        )
+    return "\n".join(rows)
+
+def main():
+    st.title(double_space_periods("Identify the Type of Variable"))
+    st.write(double_space_periods("For each data set below, identify the type of variable."))
+    st.write(double_space_periods(
+        "The possible types are: Nominal, Ordinal, Discrete, Continuous."
+    ))
+
+    # Generate 7 data sets (4 types + 3 extras) and shuffle
     used = []
     for name, dictionary in type_dicts:
-        category, values = choose_and_sample(dictionary)
-        used.append((name, category, values))
-
+        category, sample = choose_and_sample(dictionary)
+        used.append((category, sample, name))
     all_dicts = type_dicts
     extra = []
     for _ in range(3):
         name, dictionary = random.choice(all_dicts)
-        category, values = choose_and_sample(dictionary)
-        extra.append((name, category, values))
-
+        category, sample = choose_and_sample(dictionary)
+        extra.append((category, sample, name))
     total = used + extra
+    total = total[:7]
     random.shuffle(total)
-    return total
 
-st.title("Type of Variable - Problem Problems")
+    num_width = 6
+    col1 = 32
+    col2 = 60
 
-st.write(double_space_periods("Identify what type of variable each data set is below."))
+    table_lines = []
+    header = (
+        pad("#", num_width) +
+        pad("Data Set", col1) +
+        pad("Values", col2)
+    )
+    line_sep = "-" * (num_width + col1 + col2)
+    table_lines.append(header)
+    table_lines.append(line_sep)
 
-if st.button("Generate New Problem Set"):
-    st.session_state['problem_set'] = generate_problem_set()
+    for idx, (category, values, _type) in enumerate(total, 1):
+        value_str = "{" + ', '.join(str(x) for x in values) + "}"
+        row = build_wrapped_row(idx, category, value_str, num_width, col1, col2)
+        table_lines.append(row)
+        table_lines.append(line_sep)
 
-if 'problem_set' not in st.session_state:
-    st.session_state['problem_set'] = generate_problem_set()
+    st.code("\n".join(table_lines), language="text")
 
-problem_set = st.session_state['problem_set']
+    # Answer Key
+    st.subheader(double_space_periods("Answer Key"))
+    answer_lines = []
+    for idx, (_, _, _type) in enumerate(total, 1):
+        answer = _type.capitalize()
+        answer_lines.append(f"{idx}. {answer}")
+        answer_lines.append("")
+    st.code("\n".join(answer_lines), language="text")
 
-for idx, (name, category, values) in enumerate(problem_set, 1):
-    label = f"{idx}. {category}."
-    data = ', '.join(str(x) for x in values)
-    st.write(double_space_periods(f"{label} {data}"))
-
-st.markdown('<hr>', unsafe_allow_html=True)
-st.write(double_space_periods("Answer Key:"))
-for idx, (name, _, _) in enumerate(problem_set, 1):
-    st.write(double_space_periods(f"{idx}. {name}"))
+if __name__ == "__main__":
+    main()
