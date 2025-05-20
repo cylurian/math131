@@ -493,7 +493,7 @@ def generate_problem_set():
     random.shuffle(total)
     return total
 
-st.title("Type of Variable Problem Set")
+st.title("Type of Variable - Problem Problems")
 
 st.write(double_space_periods("Identify what type of variable each data set is below."))
 
