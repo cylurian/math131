@@ -2,6 +2,9 @@ import random
 import textwrap
 import streamlit as st
 
+# Set Streamlit page to wide layout
+st.set_page_config(layout="wide")
+
 # ----- Embedded Data Dictionaries -----
 
 nominal = {
@@ -472,7 +475,6 @@ def choose_and_sample(dictionary):
     return category, sampled_points
 
 def double_space_periods(s):
-    # Handles double spacing after periods (including line end)
     out = s.replace('. ', '.  ')
     if out.endswith('.'):
         out += ' '
@@ -500,14 +502,7 @@ def build_wrapped_row(idx, category, value_str, num_width, col1, col2):
         )
     return "\n".join(rows)
 
-def main():
-    st.title(double_space_periods("Identify the Type of Variable"))
-    st.write(double_space_periods("For each data set below, identify the type of variable."))
-    st.write(double_space_periods(
-        "The possible types are: Nominal, Ordinal, Discrete, Continuous."
-    ))
-
-    # Generate 7 data sets (4 types + 3 extras) and shuffle
+def get_problem_set():
     used = []
     for name, dictionary in type_dicts:
         category, sample = choose_and_sample(dictionary)
@@ -521,37 +516,67 @@ def main():
     total = used + extra
     total = total[:7]
     random.shuffle(total)
+    return total
 
-    num_width = 6
-    col1 = 32
-    col2 = 60
+# Use Streamlit session state so that reruns preserve or reset values
+if 'problem_set' not in st.session_state:
+    st.session_state['problem_set'] = get_problem_set()
 
-    table_lines = []
-    header = (
-        pad("#", num_width) +
-        pad("Data Set", col1) +
-        pad("Values", col2)
-    )
-    line_sep = "-" * (num_width + col1 + col2)
-    table_lines.append(header)
+st.title(double_space_periods("Identify the Type of Variable"))
+st.write(double_space_periods("For each data set below, identify the type of variable."))
+st.write(double_space_periods(
+    "The possible types are: Nominal, Ordinal, Discrete, Continuous."
+))
+
+# Button to rerun random data
+if st.button('Run Again'):
+    st.session_state['problem_set'] = get_problem_set()
+
+problem_set = st.session_state['problem_set']
+
+# Dynamically calculate the maximum length of the "Values" column
+max_val_len = 0
+for _, values, _ in problem_set:
+    value_str = "{" + ', '.join(str(x) for x in values) + "}"
+    if len(value_str) > max_val_len:
+        max_val_len = len(value_str)
+# Buffer and cap to prevent super-wide boxes
+col2 = min(max(max_val_len + 10, 60), 120)
+col1 = 32
+num_width = 6
+
+table_lines = []
+header = (
+    pad("#", num_width) +
+    pad("Data Set", col1) +
+    pad("Values", col2)
+)
+line_sep = "-" * (num_width + col1 + col2)
+table_lines.append(header)
+table_lines.append(line_sep)
+
+for idx, (category, values, _type) in enumerate(problem_set, 1):
+    value_str = "{" + ', '.join(str(x) for x in values) + "}"
+    row = build_wrapped_row(idx, category, value_str, num_width, col1, col2)
+    table_lines.append(row)
     table_lines.append(line_sep)
 
-    for idx, (category, values, _type) in enumerate(total, 1):
-        value_str = "{" + ', '.join(str(x) for x in values) + "}"
-        row = build_wrapped_row(idx, category, value_str, num_width, col1, col2)
-        table_lines.append(row)
-        table_lines.append(line_sep)
+# Use st.text_area for automatic text wrapping and bigger display
+st.text_area(
+    label="",
+    value="\n".join(table_lines),
+    height=400,
+)
 
-    st.code("\n".join(table_lines), language="text")
-
-    # Answer Key
-    st.subheader(double_space_periods("Answer Key"))
-    answer_lines = []
-    for idx, (_, _, _type) in enumerate(total, 1):
-        answer = _type.capitalize()
-        answer_lines.append(f"{idx}. {answer}")
-        answer_lines.append("")
-    st.code("\n".join(answer_lines), language="text")
-
-if __name__ == "__main__":
-    main()
+# Answer Key
+st.subheader(double_space_periods("Answer Key"))
+answer_lines = []
+for idx, (_, _, _type) in enumerate(problem_set, 1):
+    answer = _type.capitalize()
+    answer_lines.append(f"{idx}. {answer}")
+    answer_lines.append("")
+st.text_area(
+    label="",
+    value="\n".join(answer_lines),
+    height=170,
+)
