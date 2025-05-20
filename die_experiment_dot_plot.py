@@ -52,4 +52,4 @@ if st.button("Roll the die"):
     dot_plot_lines.append(x_ticks)
 
     st.write("**Vertical Dot Plot:**")
-    st.code("\
+    st.code("\n".join(dot_plot_lines))
