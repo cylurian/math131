@@ -1,37 +1,61 @@
-import random
 import streamlit as st
 import matplotlib.pyplot as plt
+import random
+from collections import Counter
 
-num_trials = st.number_input("Enter the number of die rolls:", min_value=1, value=60, step=1)
+def dot_plot(data, title="Dot Plot", xlabel="Values", ylabel="Frequency"):
+    counts = Counter(data)
+    x_vals = []
+    y_vals = []
 
-if st.button("Roll the die"):
-    results = [random.randint(1, 6) for _ in range(num_trials)]
-    st.write("**Results:**")
-    res_lines = []
-    for i in range(0, num_trials, 25):
-        res_lines.append(" ".join(str(x) for x in results[i:i+25]))
-    st.code("\n".join(res_lines))
+    dot_spacing = 0.25  # Controls vertical spacing between dots
 
-    # Frequency table
-    freq = {x: 0 for x in range(1, 7)}
-    for result in results:
-        freq[result] += 1
-    table = "x  |  f\n" + "--------\n"
-    for x in range(1, 7):
-        table += f"{x}  |  {freq[x]}\n"
-    st.code(table)
+    for x, count in sorted(counts.items()):
+        for i in range(count):
+            x_vals.append(x)
+            y_vals.append((i + 1) * dot_spacing)
 
-    # Matplotlib dot plot
-    st.write("**Vertical Dot Plot:**")
     fig, ax = plt.subplots(figsize=(6, 4))
-    for x in range(1, 7):
-        y = range(1, freq[x]+1)
-        ax.plot([x]*freq[x], y, 'o', color='black')
-    ax.set_xticks([1,2,3,4,5,6])
-    ax.set_yticks(range(1, max(freq.values())+1))
-    ax.set_xlabel("x")
-    ax.set_ylabel("Frequency")
-    ax.set_title("Vertical Dot Plot of Die Rolls")
-    ax.set_xlim(0.5, 6.5)
-    ax.grid(axis='y', linestyle=':')
-    st.pyplot(fig)
+    ax.scatter(x_vals, y_vals, s=80, edgecolors='black', color='skyblue')
+
+    # Add count labels on top of each column
+    for x, count in sorted(counts.items()):
+        ax.text(x, (count + 1) * dot_spacing, str(count), ha='center', va='bottom', fontsize=9)
+
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+
+    ax.set_xticks(sorted(counts.keys()))
+    ax.set_yticks([])
+
+    ax.set_xlim(min(counts.keys()) - 0.5, max(counts.keys()) + 0.5)
+    ax.set_ylim(0, (max(counts.values()) + 2) * dot_spacing)
+
+    ax.grid(axis='y', linestyle='--', alpha=0.3)
+    fig.tight_layout()
+    return fig
+
+def main():
+    st.title("Dot Plot of Die Rolls")
+
+    st.write(
+        "Enter the number of die rolls and click 'Roll Dice & Plot' to generate a dot plot."
+    )
+
+    num_trials = st.number_input(
+        "Number of die rolls", min_value=1, max_value=500, value=20, step=1
+    )
+    roll_button = st.button("Roll Dice & Plot")
+
+    if roll_button:
+        results = [random.randint(1, 6) for _ in range(num_trials)]
+        fig = dot_plot(
+            results,
+            title=f"Dot Plot of {num_trials} Die Rolls",
+            xlabel="Die Face"
+        )
+        st.pyplot(fig)
+
+if __name__ == "__main__":
+    main()
