@@ -44,6 +44,7 @@ st.markdown("""
 # Initialize session state for the dataset
 if 'dataset_generated' not in st.session_state:
     st.session_state.dataset_generated = False
+    st.session_state.values = []
 
 # Generate dataset button
 if st.button("🎲 Generate New Dataset", type="primary"):
@@ -65,7 +66,7 @@ if st.button("🎲 Generate New Dataset", type="primary"):
     st.session_state.dataset_generated = True
 
 # Display calculations if dataset has been generated
-if st.session_state.dataset_generated:
+if st.session_state.dataset_generated and st.session_state.values:
     values = st.session_state.values
     
     st.markdown("### 📝 Problem:")
