@@ -41,11 +41,6 @@ st.markdown("""
 ---
 """)
 
-# Initialize session state for the dataset
-if 'dataset_generated' not in st.session_state:
-    st.session_state.dataset_generated = False
-    st.session_state.values = []
-
 # Generate dataset button
 if st.button("🎲 Generate New Dataset", type="primary"):
     # Randomly choose sample size between 10 and 25
@@ -62,12 +57,11 @@ if st.button("🎲 Generate New Dataset", type="primary"):
         values = [random.randint(3, 54) for _ in range(sample_size)]
     
     # Store in session state
-    st.session_state.values = values
-    st.session_state.dataset_generated = True
+    st.session_state.current_values = values
 
-# Display calculations if dataset has been generated
-if st.session_state.dataset_generated and st.session_state.values:
-    values = st.session_state.values
+# Check if we have values to display
+if hasattr(st.session_state, 'current_values') and st.session_state.current_values:
+    values = st.session_state.current_values
     
     st.markdown("### 📝 Problem:")
     st.markdown("**Find the mean, median, and mode for the following data set:**")
