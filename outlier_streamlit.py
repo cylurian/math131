@@ -31,14 +31,13 @@ st.write(
     """
 )
 
-# Sidebar for controls
+# Sidebar for controls (no seed for randomness)
 st.sidebar.header("Controls")
-seed = st.sidebar.number_input("Random seed (for reproducibility)", value=42, step=1)
 force_outlier = st.sidebar.checkbox("Force an outlier", value=False)
 n_base = st.sidebar.slider("Dataset size (n)", min_value=11, max_value=25, value=15)
 value_range = st.sidebar.slider("Random values range", min_value=1, max_value=100, value=(10, 50))
 
-random.seed(seed)
+# No random.seed() — dataset changes on every rerun/reload
 
 # Step 1: Generate base dataset
 data = [random.randint(value_range[0], value_range[1]) for _ in range(n_base)]
@@ -114,4 +113,3 @@ else:
             st.error(f"Outlier {x} is **above** the upper bound ({upper_bound:.2f}).")
 
 st.caption("App by Frank – uses Tukey's method (boxplot convention) for quartiles and outlier detection.")
-
